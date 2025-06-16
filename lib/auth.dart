@@ -18,6 +18,13 @@ class _SignInDemoState extends State<SignInDemo> {
         clientId:
             '611007919856-2jae4hpql0eaeai46kpappvasajc1uf0.apps.googleusercontent.com',
         clientSecret: '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',
+        scopes: [
+          'email',
+          'profile',
+          'https://www.googleapis.com/auth/userinfo.email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://mail.google.com/',
+        ],
       ),
     );
   }

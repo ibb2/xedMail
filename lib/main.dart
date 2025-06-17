@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xedmail/auth.dart';
+import 'package:xedmail/inbox.dart';
 
 void main() {
   runApp(const MyApp());
@@ -118,6 +119,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: Text("Login"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Inbox()),
+                );
+              },
+              child: Text("Go to Inbox"),
             ),
           ],
         ),

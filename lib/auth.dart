@@ -9,6 +9,7 @@ class SignInDemo extends StatefulWidget {
 
 class _SignInDemoState extends State<SignInDemo> {
   late GoogleSignIn _googleSignIn;
+  var isSignedIn = false;
 
   @override
   void initState() {
@@ -42,11 +43,19 @@ class _SignInDemoState extends State<SignInDemo> {
                 final credentials = await _googleSignIn.signIn();
                 if (credentials != null) {
                   print('Signed in successfully: ${credentials.accessToken}');
+                  setState(() {
+                    isSignedIn = true;
+                  });
                 } else {
                   print('Sign in failed');
+                  setState(() {
+                    isSignedIn = false;
+                  });
                 }
               },
-              child: const Text('Sign In'),
+              child: isSignedIn
+                  ? Text('Sign out')
+                  : Text('Sign in with Google'),
             ),
             const Spacer(),
           ],

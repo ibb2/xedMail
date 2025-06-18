@@ -15,6 +15,7 @@ class Inbox extends StatefulWidget {
 class _InboxState extends State<Inbox> {
   late GoogleSignIn _googleSignIn;
   late Future<List<MimeMessage>> _emails;
+  late MailClient _mailClient;
 
   @override
   void initState() {
@@ -35,6 +36,23 @@ class _InboxState extends State<Inbox> {
     );
 
     _emails = fetchEmails();
+
+    pollEmails();
+  }
+
+  Future<void> pollEmails() async {
+    try {
+      _mailClient.eventBus.on<MailLoadEvent>().listen((event) {
+        print('New message at ${DateTime.now()}:');
+        final emails = _mailClient.fetchMessages(count: 20);
+        setState(() {
+          _emails = Future.value(emails);
+        });
+      });
+      await _mailClient.startPolling();
+    } catch (e) {
+      print('Error fetching emails: $e');
+    }
   }
 
   Future<List<MimeMessage>> fetchEmails() async {
@@ -71,17 +89,17 @@ class _InboxState extends State<Inbox> {
       auth: oauth,
       config: config,
     );
-    final mailClient = MailClient(account, isLogEnabled: true);
+    _mailClient = MailClient(account, isLogEnabled: true);
     print("Connected to account: ${account.name} (${account.email})");
     try {
-      await mailClient.connect();
+      await _mailClient.connect();
       print('connected');
-      final mailboxes = await mailClient.listMailboxesAsTree(
+      final mailboxes = await _mailClient.listMailboxesAsTree(
         createIntermediate: false,
       );
       print(mailboxes);
-      await mailClient.selectInbox();
-      return await mailClient.fetchMessages(count: 20);
+      await _mailClient.selectInbox();
+      return await _mailClient.fetchMessages(count: 20);
 
       // mailClient.eventBus.on<MailLoadEvent>().listen((event) {
       //   print('New message at ${DateTime.now()}:');

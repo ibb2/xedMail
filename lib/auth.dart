@@ -57,6 +57,13 @@ class _SignInDemoState extends State<SignInDemo> {
                   ? Text('Sign out')
                   : Text('Sign in with Google'),
             ),
+            ElevatedButton(
+              onPressed: () async {
+                await _googleSignIn.signOut();
+                print('Sign out successful');
+              },
+              child: Text('Sign out'),
+            ),
             const Spacer(),
           ],
         ),

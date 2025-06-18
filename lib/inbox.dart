@@ -145,7 +145,8 @@ class _InboxState extends State<Inbox> {
                   child: ListView.builder(
                     itemCount: emails.length,
                     itemBuilder: (context, index) {
-                      final email = emails[index];
+                      final rEmails = emails.reversed.toList();
+                      final email = rEmails[index];
                       return ListTile(
                         title: Text(email.decodeSubject() ?? 'No Subject'),
                         subtitle: Text(

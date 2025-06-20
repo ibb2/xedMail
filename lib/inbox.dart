@@ -1,11 +1,12 @@
 import 'dart:async';
 
-import 'package:enough_mail/discover.dart';
 import 'package:enough_mail/enough_mail.dart';
-import 'package:enough_mail/smtp.dart';
+import 'package:enough_mail_flutter/enough_mail_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart' hide GoogleSignIn;
+import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart';
+import 'package:html/parser.dart';
 
 class Inbox extends StatefulWidget {
   const Inbox({super.key});
@@ -18,8 +19,10 @@ class _InboxState extends State<Inbox> {
   late GoogleSignIn _googleSignIn;
   late MailClient _mailClient;
 
+  int? _expandedIndex;
   List<MimeMessage> _emails = [];
   StreamSubscription<MailLoadEvent>? _mailSubscription;
+  final Map<int, String> _decodedHtmlBodies = {};
 
   @override
   void initState() {
@@ -85,10 +88,23 @@ class _InboxState extends State<Inbox> {
       // );
       // print(mailboxes);
       await _mailClient.selectInbox();
+      _decodedHtmlBodies.clear();
       _emails = await _mailClient.fetchMessages(count: 20);
+
       setState(() {
         _emails = _emails.reversed.toList();
       });
+
+      int index = 0;
+      for (var email in _emails) {
+        final html = email.decodeTextHtmlPart();
+        print('Decoded HTML for email $index: $html');
+        _decodedHtmlBodies[index] = sanitizeHtml(
+          html ?? "<p>No HTML content</p>",
+        );
+
+        index++;
+      }
 
       _mailSubscription = _mailClient.eventBus.on<MailLoadEvent>().listen((
         event,
@@ -102,6 +118,26 @@ class _InboxState extends State<Inbox> {
     } on MailException catch (e) {
       print('High level API failed with $e');
     }
+  }
+
+  /// Very simple, non-destructive HTML sanitizer.
+  String sanitizeHtml(String html) {
+    final doc = parse(html);
+
+    // Remove <script>, <style>, and <meta>
+    doc
+        .querySelectorAll('script, style, meta, link')
+        .forEach((e) => e.remove());
+
+    // Optional: remove base64 img tags
+    doc.querySelectorAll('img').forEach((img) {
+      final src = img.attributes['src'];
+      if (src != null && src.startsWith('data:image')) {
+        img.remove();
+      }
+    });
+
+    return doc.body?.innerHtml ?? '';
   }
 
   // Future<void> pollEmails() async {
@@ -181,6 +217,13 @@ class _InboxState extends State<Inbox> {
     }
   }
 
+  String generateHtml(MimeMessage mimeMessage) {
+    return mimeMessage.transformToHtml(
+      blockExternalImages: false,
+      emptyMessageText: 'Nothing here, move on!',
+    );
+  }
+
   void refreshInbox() {
     print('Refreshing inbox...');
     setState(() {
@@ -207,9 +250,45 @@ class _InboxState extends State<Inbox> {
                 children: <Widget>[
                   Expanded(
                     child: ListView.builder(
-                      itemCount: _emails.length,
+                      itemCount: _emails.length * 2,
                       itemBuilder: (context, index) {
-                        final email = _emails[index];
+                        final emailIndex = index ~/ 2;
+
+                        if (index.isOdd) {
+                          // insert expanded email body after tapped item
+                          if (_expandedIndex == emailIndex) {
+                            String htmlContent =
+                                _decodedHtmlBodies[emailIndex] ??
+                                '<p>(Empty)</p>';
+                            print('HTML content: $htmlContent');
+                            return SizedBox(
+                              height: 400,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: InAppWebView(
+                                  initialData: InAppWebViewInitialData(
+                                    data: htmlContent,
+                                    mimeType: 'text/html',
+                                    encoding: 'utf-8',
+                                  ),
+                                  initialSettings: InAppWebViewSettings(
+                                    useOnDownloadStart: true,
+                                    useOnLoadResource: true,
+                                    javaScriptEnabled: true,
+                                    useShouldOverrideUrlLoading: true,
+                                    clearCache: true,
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        }
+
+                        final email = _emails[emailIndex];
                         return ListTile(
                           title: Text(email.decodeSubject() ?? 'No Subject'),
                           subtitle: Text(
@@ -227,6 +306,13 @@ class _InboxState extends State<Inbox> {
                           onTap: () {
                             // Action to view email details
                             print('Tapped on email: ${email.decodeSubject()}');
+                            setState(() {
+                              if (_expandedIndex == emailIndex) {
+                                _expandedIndex = null; // Collapse
+                              } else {
+                                _expandedIndex = emailIndex; // Expand
+                              }
+                            });
                           },
                         );
                       },

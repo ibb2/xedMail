@@ -178,7 +178,7 @@ packages:
     source: hosted
     version: "2.1.1"
   enough_mail_html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: enough_mail_html
       sha256: c661c5a1299377682e28edaadbde0fc8cd0d9497abba0824d5d6cda7911a6c83
@@ -255,7 +255,7 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_inappwebview:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_inappwebview
       sha256: "80092d13d3e29b6227e25b67973c67c7210bd5e35c4b747ca908e31eb71a46d5"
@@ -425,7 +425,7 @@ packages:
     source: hosted
     version: "1.6.0"
   html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html
       sha256: "6d1264f2dffa1b1101c25a91dff0dc2daee4c18e87cd8538729773c073dbf602"

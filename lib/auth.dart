@@ -3,6 +3,8 @@ import 'package:google_sign_in/google_sign_in.dart' hide GoogleSignIn;
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart';
 
 class SignInDemo extends StatefulWidget {
+  const SignInDemo({super.key});
+
   @override
   _SignInDemoState createState() => _SignInDemoState();
 }

@@ -13,6 +13,8 @@ class NewAuthenticationPage extends StatefulWidget {
 }
 
 class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
+  late OAuth2Helper oauth;
+
   String? tokenJson, profileJson;
 
   Future<void> login() async {
@@ -36,7 +38,7 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
       redirectUri: redirectUri,
       customUriScheme: 'http',
     );
-    final oauth = OAuth2Helper(
+    oauth = OAuth2Helper(
       googleClient,
       clientId:
           '611007919856-7lkiask2j8v2r6r69npc8tbbesvj10as.apps.googleusercontent.com',
@@ -45,14 +47,12 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
 
     try {
       // 3. Acquire token
-      oauth.disconnect();
-      await oauth.removeAllTokens();
-      final token = await oauth.getToken();
+      final token = await oauth.fetchToken();
       print('Token: $token');
       tokenJson = json.encode({
-        'accessToken': token?.accessToken,
-        'refreshToken': token?.refreshToken,
-        'expiresIn': token?.expiresIn,
+        'accessToken': token.accessToken,
+        'refreshToken': token.refreshToken,
+        'expiresIn': token.expiresIn,
       });
 
       print('Token JSON: $tokenJson');
@@ -77,10 +77,14 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
 
   Future<void> logout() async {
     // Clear tokens and profile
+    oauth.removeAllTokens();
+    oauth.disconnect();
+
     setState(() {
       tokenJson = null;
       profileJson = null;
     });
+    print('Logged out');
   }
 
   @override

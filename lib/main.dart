@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:xedmail/auth.dart';
 import 'package:xedmail/inbox.dart';
+import 'package:xedmail/new-auth.dart';
 
 void main() {
   runApp(const MyApp());
@@ -115,7 +115,9 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignInDemo()),
+                  MaterialPageRoute(
+                    builder: (context) => NewAuthenticationPage(),
+                  ),
                 );
               },
               child: Text("Login"),

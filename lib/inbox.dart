@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:enough_mail/enough_mail.dart';
 import 'package:enough_mail_flutter/enough_mail_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart';
 import 'package:html/parser.dart';
+import 'package:oauth2_client/google_oauth2_client.dart';
+import 'package:oauth2_client/oauth2_helper.dart';
+import 'package:shelf/shelf.dart' as shelf;
+import 'package:shelf/shelf_io.dart' as shelf_io;
 
 class Inbox extends StatefulWidget {
   const Inbox({super.key});
@@ -18,37 +21,89 @@ class Inbox extends StatefulWidget {
 class _InboxState extends State<Inbox> {
   late GoogleSignIn _googleSignIn;
   late MailClient _mailClient;
+  late OAuth2Helper oauth;
 
   int? _expandedIndex;
   List<MimeMessage> _emails = [];
   StreamSubscription<MailLoadEvent>? _mailSubscription;
   final Map<int, String> _decodedHtmlBodies = {};
+  Map<String, dynamic>? tokenJson;
+  Map<String, dynamic>? profileJson;
 
   @override
   void initState() {
     super.initState();
-    _googleSignIn = GoogleSignIn(
-      params: GoogleSignInParams(
-        clientId:
-            '611007919856-2jae4hpql0eaeai46kpappvasajc1uf0.apps.googleusercontent.com',
-        clientSecret: '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',
-        scopes: [
-          'email',
-          'profile',
-          'https://www.googleapis.com/auth/userinfo.email',
-          'https://www.googleapis.com/auth/userinfo.profile',
-          'https://mail.google.com/',
-        ],
-      ),
+    initMail();
+  }
+
+  Future<void> silentlyLogin() async {
+    // 1. Start Shelf server on random localhost port
+    final server = await shelf_io.serve(
+      (shelf.Request req) async {
+        // Handshake: OAuth2 client picks up the URL itself
+        return shelf.Response.ok(
+          '<html><body>You may close this window.</body></html>',
+          headers: {'content-type': 'text/html'},
+        );
+      },
+      '127.0.0.1',
+      8000,
     );
 
-    initMail();
+    final redirectUri = 'http://127.0.0.1:${server.port}/';
+
+    // 2. Instantiate client & helper
+    final googleClient = GoogleOAuth2Client(
+      redirectUri: redirectUri,
+      customUriScheme: 'http',
+    );
+    oauth = OAuth2Helper(
+      googleClient,
+      clientId:
+          '611007919856-7lkiask2j8v2r6r69npc8tbbesvj10as.apps.googleusercontent.com',
+      scopes: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
+        'https://mail.google.com/',
+      ],
+    );
+
+    try {
+      // 3. Acquire token
+      final token = await oauth.getToken();
+      print('Token: $token');
+      tokenJson = json.decode(
+        json.encode({
+          'accessToken': token?.accessToken,
+          'refreshToken': token?.refreshToken,
+          'expiresIn': token?.expiresIn,
+        }),
+      );
+
+      print('Token JSON: $tokenJson');
+      // 4. Fetch profile
+      final resp = await oauth.get(
+        Uri.parse(
+          'https://www.googleapis.com/oauth2/v1/userinfo?alt=json',
+        ).toString(),
+      );
+      print('Profile Response: ${resp.body}');
+      profileJson = json.decode(resp.body);
+    } catch (e) {
+      print('Error during OAuth2 flow: $e');
+      profileJson = null;
+    } finally {
+      await server.close();
+    }
+
+    setState(() {});
   }
 
   /// High level mail API example
   Future<void> initMail() async {
-    var credentials = await _googleSignIn.signIn();
-    final email = 'ibyster824@gmail.com';
+    await silentlyLogin();
+    final email = profileJson?["email"];
     print('discovering settings for  $email...');
     final config = await Discover.discover(email);
     if (config == null) {
@@ -61,16 +116,21 @@ class _InboxState extends State<Inbox> {
       return;
     }
     print('connecting to ${config.displayName}.');
-    if (credentials == null) {
+    if (tokenJson == null) {
       print('Sign in failed or cancelled');
       return;
     }
     final oauthToken = OauthToken(
-      accessToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken ?? '',
-      tokenType: credentials.tokenType ?? 'Bearer',
-      expiresIn: 3600,
-      scope: credentials.scopes.toString(),
+      accessToken: tokenJson?['accessToken'],
+      refreshToken: tokenJson?['refreshToken'],
+      tokenType: 'Bearer',
+      expiresIn: tokenJson?['expiresIn'] ?? 3600,
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
+        'https://mail.google.com/',
+      ].toString(),
       created: DateTime.now(),
     );
     final oauth = OauthAuthentication(email, oauthToken);

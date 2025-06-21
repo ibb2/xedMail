@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -15,7 +16,12 @@ class NewAuthenticationPage extends StatefulWidget {
 class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
   late OAuth2Helper oauth;
 
-  String? tokenJson, profileJson;
+  String? tokenJson;
+  Map<String, dynamic>? profileJson;
+
+  final storage = FlutterSecureStorage();
+
+  String _keys(String accountId, String key) => 'acct_${accountId}_$key';
 
   Future<void> login() async {
     // 1. Start Shelf server on random localhost port
@@ -69,7 +75,25 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
         ).toString(),
       );
       print('Profile Response: ${resp.body}');
-      profileJson = resp.body;
+
+      profileJson = jsonDecode(resp.body);
+
+      // 5. Store tokens
+      final accountId = profileJson?['id'];
+      storage.write(key: _keys(accountId, 'access'), value: token?.accessToken);
+      storage.write(
+        key: _keys(accountId, 'refresh'),
+        value: token?.refreshToken,
+      );
+
+      // 6. Store profile
+      // Update metadata
+      final list = (await storage.read(key: 'accounts_list')) ?? '[]';
+      final ids = List<String>.from(json.decode(list));
+      if (!ids.contains(accountId)) {
+        ids.add(accountId);
+        await storage.write(key: 'accounts_list', value: json.encode(ids));
+      }
     } catch (e) {
       tokenJson = 'Error: $e';
       print('Error during OAuth2 flow: $e');

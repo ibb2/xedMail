@@ -42,17 +42,23 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
       googleClient,
       clientId:
           '611007919856-7lkiask2j8v2r6r69npc8tbbesvj10as.apps.googleusercontent.com',
-      scopes: ['openid', 'email', 'profile', 'https://mail.google.com/'],
+      scopes: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
+        'https://mail.google.com/',
+      ],
     );
 
     try {
       // 3. Acquire token
-      final token = await oauth.fetchToken();
+      final token = await oauth.getToken();
       print('Token: $token');
+      print('Scopes: ${token?.scope}');
       tokenJson = json.encode({
-        'accessToken': token.accessToken,
-        'refreshToken': token.refreshToken,
-        'expiresIn': token.expiresIn,
+        'accessToken': token?.accessToken,
+        'refreshToken': token?.refreshToken,
+        'expiresIn': token?.expiresIn,
       });
 
       print('Token JSON: $tokenJson');

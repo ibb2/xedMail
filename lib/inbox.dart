@@ -304,126 +304,122 @@ class _InboxState extends State<Inbox> {
       appBar: AppBar(title: const Text('Inbox')),
       body: _emails.isEmpty
           ? Center(child: CircularProgressIndicator())
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _emails.length * 2,
-                      itemBuilder: (context, index) {
-                        final emailIndex = index ~/ 2;
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _emails.length * 2,
+                    itemBuilder: (context, index) {
+                      final emailIndex = index ~/ 2;
 
-                        if (index.isOdd) {
-                          // insert expanded email body after tapped item
-                          if (_expandedIndex == emailIndex) {
-                            String htmlContent =
-                                _decodedHtmlBodies[emailIndex] ??
-                                '<p>(Empty)</p>';
-                            return SizedBox(
-                              height: 400,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
+                      if (index.isOdd) {
+                        // insert expanded email body after tapped item
+                        if (_expandedIndex == emailIndex) {
+                          String htmlContent =
+                              _decodedHtmlBodies[emailIndex] ??
+                              '<p>(Empty)</p>';
+                          return SizedBox(
+                            height: 400,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: InAppWebView(
+                                initialData: InAppWebViewInitialData(
+                                  data: htmlContent,
+                                  mimeType: 'text/html',
+                                  encoding: 'utf-8',
                                 ),
-                                child: InAppWebView(
-                                  initialData: InAppWebViewInitialData(
-                                    data: htmlContent,
-                                    mimeType: 'text/html',
-                                    encoding: 'utf-8',
-                                  ),
-                                  initialSettings: InAppWebViewSettings(
-                                    useOnDownloadStart: true,
-                                    useOnLoadResource: true,
-                                    javaScriptEnabled: true,
-                                    useShouldOverrideUrlLoading: true,
-                                    clearCache: true,
-                                  ),
+                                initialSettings: InAppWebViewSettings(
+                                  useOnDownloadStart: true,
+                                  useOnLoadResource: true,
+                                  javaScriptEnabled: true,
+                                  useShouldOverrideUrlLoading: true,
+                                  clearCache: true,
                                 ),
                               ),
-                            );
-                          } else {
-                            return const SizedBox.shrink();
-                          }
+                            ),
+                          );
+                        } else {
+                          return const SizedBox.shrink();
                         }
+                      }
 
-                        final email = _emails[emailIndex];
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(0),
-                          ),
-                          child: ListTile(
-                            title: Expanded(
-                              flex: 1,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    email.from?.firstOrNull?.personalName ??
-                                        email.fromEmail ??
-                                        'Unknown Sender',
-                                  ),
-                                  Text(
-                                    email.decodeSubject() ?? 'No Subject',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ],
+                      final email = _emails[emailIndex];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadiusGeometry.circular(0),
+                        ),
+                        child: ListTile(
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                email.from?.firstOrNull?.personalName ??
+                                    email.fromEmail ??
+                                    'Unknown Sender',
                               ),
-                            ),
-                            // subtitle: Column(
-                            //   crossAxisAlignment: CrossAxisAlignment.start,
-                            //   children: [
-                            //     if (_previewSnippets.containsKey(emailIndex))
-                            //       Padding(
-                            //         padding: const EdgeInsets.only(top: 4.0),
-                            //         child: Text(
-                            //           _previewSnippets[emailIndex]!,
-                            //           style: TextStyle(
-                            //             fontSize: 13,
-                            //             color: Colors.grey[600],
-                            //           ),
-                            //           maxLines: 2,
-                            //           overflow: TextOverflow.ellipsis,
-                            //         ),
-                            //       ),
-                            //   ],
-                            // ),
-                            trailing: Text(
-                              email.decodeDate()?.toLocal().toString().split(
-                                    ' ',
-                                  )[0] ??
-                                  '',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            onTap: () {
-                              // Action to view email details
-                              print(
-                                'Tapped on email: ${email.decodeSubject()}',
-                              );
-                              setState(() {
-                                if (_expandedIndex == emailIndex) {
-                                  _expandedIndex = null; // Collapse
-                                } else {
-                                  _expandedIndex = emailIndex; // Expand
-                                }
-                              });
-                            },
+                              Flexible(
+                                child: Text(
+                                  email.decodeSubject() ?? 'No Subject',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Action to refresh inbox
-                      refreshInbox();
+                          // subtitle: Column(
+                          //   crossAxisAlignment: CrossAxisAlignment.start,
+                          //   children: [
+                          //     if (_previewSnippets.containsKey(emailIndex))
+                          //       Padding(
+                          //         padding: const EdgeInsets.only(top: 4.0),
+                          //         child: Text(
+                          //           _previewSnippets[emailIndex]!,
+                          //           style: TextStyle(
+                          //             fontSize: 13,
+                          //             color: Colors.grey[600],
+                          //           ),
+                          //           maxLines: 2,
+                          //           overflow: TextOverflow.ellipsis,
+                          //         ),
+                          //       ),
+                          //   ],
+                          // ),
+                          trailing: Text(
+                            email.decodeDate()?.toLocal().toString().split(
+                                  ' ',
+                                )[0] ??
+                                '',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onTap: () {
+                            // Action to view email details
+                            setState(() {
+                              if (_expandedIndex == emailIndex) {
+                                _expandedIndex = null; // Collapse
+                              } else {
+                                _expandedIndex = emailIndex; // Expand
+                              }
+                            });
+                          },
+                        ),
+                      );
                     },
-                    child: const Text('Refresh Inbox'),
                   ),
-                ],
-              ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Action to refresh inbox
+                    refreshInbox();
+                  },
+                  child: const Text('Refresh Inbox'),
+                ),
+              ],
             ),
     );
   }

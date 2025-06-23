@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:xedmail/homepage.dart';
 import 'package:xedmail/inbox.dart';
 import 'package:xedmail/new-auth.dart';
 
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const HomePage(),
     );
   }
 }
@@ -126,7 +127,9 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Inbox()),
+                  MaterialPageRoute(
+                    builder: (context) => const Inbox(searchQuery: null),
+                  ),
                 );
               },
               child: Text("Go to Inbox"),

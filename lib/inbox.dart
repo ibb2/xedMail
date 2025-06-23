@@ -12,7 +12,9 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
 class Inbox extends StatefulWidget {
-  const Inbox({super.key});
+  const Inbox({super.key, required this.searchQuery});
+
+  final String? searchQuery;
 
   @override
   State<Inbox> createState() => _InboxState();
@@ -72,7 +74,6 @@ class _InboxState extends State<Inbox> {
     try {
       // 3. Acquire token
       final token = await oauth.getToken();
-      print('Token: $token');
       tokenJson = json.decode(
         json.encode({
           'accessToken': token?.accessToken,
@@ -80,18 +81,14 @@ class _InboxState extends State<Inbox> {
           'expiresIn': token?.expiresIn,
         }),
       );
-
-      print('Token JSON: $tokenJson');
       // 4. Fetch profile
       final resp = await oauth.get(
         Uri.parse(
           'https://www.googleapis.com/oauth2/v1/userinfo?alt=json',
         ).toString(),
       );
-      print('Profile Response: ${resp.body}');
       profileJson = json.decode(resp.body);
     } catch (e) {
-      print('Error during OAuth2 flow: $e');
       profileJson = null;
     } finally {
       await server.close();
@@ -102,9 +99,9 @@ class _InboxState extends State<Inbox> {
 
   /// High level mail API example
   Future<void> initMail() async {
+    print("Search Query ${widget.searchQuery}");
     await silentlyLogin();
     final email = profileJson?["email"];
-    print('discovering settings for  $email...');
     final config = await Discover.discover(email);
     if (config == null) {
       // note that you can also directly create an account when
@@ -115,7 +112,6 @@ class _InboxState extends State<Inbox> {
       print('Unable to auto-discover settings for $email');
       return;
     }
-    print('connecting to ${config.displayName}.');
     if (tokenJson == null) {
       print('Sign in failed or cancelled');
       return;
@@ -158,7 +154,6 @@ class _InboxState extends State<Inbox> {
       int index = 0;
       for (var email in _emails) {
         final html = email.decodeTextHtmlPart();
-        print('Decoded HTML for email $index: $html');
         _decodedHtmlBodies[index] = sanitizeHtml(
           html ?? "<p>No HTML content</p>",
         );
@@ -226,9 +221,7 @@ class _InboxState extends State<Inbox> {
   }
 
   Future<void> fetchEmails() async {
-    var credentials = await _googleSignIn.signIn();
     final email = 'ibyster824@gmail.com';
-    print('discovering settings for  $email...');
     final config = await Discover.discover(email);
     if (config == null) {
       // note that you can also directly create an account when
@@ -239,17 +232,16 @@ class _InboxState extends State<Inbox> {
       print('Unable to auto-discover settings for $email');
       return;
     }
-    print('connecting to ${config.displayName}.');
-    if (credentials == null) {
+    if (tokenJson == null) {
       print('Sign in failed or cancelled');
       return;
     }
     final oauthToken = OauthToken(
-      accessToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken ?? '',
-      tokenType: credentials.tokenType ?? 'Bearer',
+      accessToken: tokenJson?['accessToken'],
+      refreshToken: tokenJson?['refreshToken'] ?? '',
+      tokenType: tokenJson?['tokenType'] ?? 'Bearer',
       expiresIn: 3600,
-      scope: credentials.scopes.toString(),
+      scope: tokenJson?['scopes'].toString() ?? '',
       created: DateTime.now(),
     );
     final oauth = OauthAuthentication(email, oauthToken);
@@ -260,14 +252,11 @@ class _InboxState extends State<Inbox> {
       config: config,
     );
     _mailClient = MailClient(account, isLogEnabled: true);
-    print("Connected to account: ${account.name} (${account.email})");
     try {
       await _mailClient.connect();
-      print('connected');
       final mailboxes = await _mailClient.listMailboxesAsTree(
         createIntermediate: false,
       );
-      print(mailboxes);
       await _mailClient.selectInbox();
       _emails = await _mailClient.fetchMessages(count: 20);
       _emails = _emails.reversed.toList();
@@ -320,7 +309,6 @@ class _InboxState extends State<Inbox> {
                             String htmlContent =
                                 _decodedHtmlBodies[emailIndex] ??
                                 '<p>(Empty)</p>';
-                            print('HTML content: $htmlContent');
                             return SizedBox(
                               height: 400,
                               child: Padding(

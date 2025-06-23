@@ -17,7 +17,7 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
   late OAuth2Helper oauth;
 
   String? tokenJson;
-  Map<String, dynamic>? profileJson;
+  Map<String, dynamic>? profile;
 
   final storage = FlutterSecureStorage();
 
@@ -76,10 +76,10 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
       );
       print('Profile Response: ${resp.body}');
 
-      profileJson = jsonDecode(resp.body);
+      profile = jsonDecode(resp.body);
 
       // 5. Store tokens
-      final accountId = profileJson?['id'];
+      final accountId = profile?['id'];
       storage.write(key: _keys(accountId, 'access'), value: token?.accessToken);
       storage.write(
         key: _keys(accountId, 'refresh'),
@@ -97,7 +97,7 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
     } catch (e) {
       tokenJson = 'Error: $e';
       print('Error during OAuth2 flow: $e');
-      profileJson = null;
+      profile = null;
     } finally {
       await server.close();
     }
@@ -112,7 +112,7 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
 
     setState(() {
       tokenJson = null;
-      profileJson = null;
+      profile = null;
     });
     print('Logged out');
   }
@@ -134,16 +134,16 @@ class _NewAuthenticationPageState extends State<NewAuthenticationPage> {
                 onPressed: () {
                   setState(() {
                     tokenJson = null;
-                    profileJson = null;
+                    profile = null;
                   });
                 },
                 child: const Text('Clear Tokens'),
               ),
             ],
-            if (profileJson != null) ...[
+            if (profile != null) ...[
               const SizedBox(height: 20),
               const Text('Profile:'),
-              SelectableText(profileJson!),
+              SelectableText(profile.toString()),
             ],
           ],
         ),

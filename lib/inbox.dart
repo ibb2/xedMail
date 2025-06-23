@@ -29,6 +29,8 @@ class _InboxState extends State<Inbox> {
   List<MimeMessage> _emails = [];
   StreamSubscription<MailLoadEvent>? _mailSubscription;
   final Map<int, String> _decodedHtmlBodies = {};
+  final Map<int, String> _previewSnippets = {};
+
   Map<String, dynamic>? tokenJson;
   Map<String, dynamic>? profileJson;
 
@@ -154,9 +156,18 @@ class _InboxState extends State<Inbox> {
       int index = 0;
       for (var email in _emails) {
         final html = email.decodeTextHtmlPart();
+        final text = email.decodeTextPlainPart();
+
         _decodedHtmlBodies[index] = sanitizeHtml(
           html ?? "<p>No HTML content</p>",
         );
+        _previewSnippets[index] =
+            text
+                ?.replaceAll(RegExp(r'\s+'), ' ')
+                .trim()
+                .substring(0, 120)
+                .trim() ??
+            '';
 
         index++;
       }
@@ -337,31 +348,64 @@ class _InboxState extends State<Inbox> {
                         }
 
                         final email = _emails[emailIndex];
-                        return ListTile(
-                          title: Text(email.decodeSubject() ?? 'No Subject'),
-                          subtitle: Text(
-                            email.from?.firstOrNull.toString() ??
-                                'Unknown Sender',
-                            style: const TextStyle(fontSize: 12),
+                        return Card(
+                          child: ListTile(
+                            title: Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    email.from?.firstOrNull?.personalName ??
+                                        email.fromEmail ??
+                                        'Unknown Sender',
+                                  ),
+                                  Text(
+                                    email.decodeSubject() ?? 'No Subject',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // subtitle: Column(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     if (_previewSnippets.containsKey(emailIndex))
+                            //       Padding(
+                            //         padding: const EdgeInsets.only(top: 4.0),
+                            //         child: Text(
+                            //           _previewSnippets[emailIndex]!,
+                            //           style: TextStyle(
+                            //             fontSize: 13,
+                            //             color: Colors.grey[600],
+                            //           ),
+                            //           maxLines: 2,
+                            //           overflow: TextOverflow.ellipsis,
+                            //         ),
+                            //       ),
+                            //   ],
+                            // ),
+                            trailing: Text(
+                              email.decodeDate()?.toLocal().toString().split(
+                                    ' ',
+                                  )[0] ??
+                                  '',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            onTap: () {
+                              // Action to view email details
+                              print(
+                                'Tapped on email: ${email.decodeSubject()}',
+                              );
+                              setState(() {
+                                if (_expandedIndex == emailIndex) {
+                                  _expandedIndex = null; // Collapse
+                                } else {
+                                  _expandedIndex = emailIndex; // Expand
+                                }
+                              });
+                            },
                           ),
-                          trailing: Text(
-                            email.decodeDate()?.toLocal().toString().split(
-                                  ' ',
-                                )[0] ??
-                                '',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          onTap: () {
-                            // Action to view email details
-                            print('Tapped on email: ${email.decodeSubject()}');
-                            setState(() {
-                              if (_expandedIndex == emailIndex) {
-                                _expandedIndex = null; // Collapse
-                              } else {
-                                _expandedIndex = emailIndex; // Expand
-                              }
-                            });
-                          },
                         );
                       },
                     ),

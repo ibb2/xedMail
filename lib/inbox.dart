@@ -349,6 +349,9 @@ class _InboxState extends State<Inbox> {
 
                         final email = _emails[emailIndex];
                         return Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadiusGeometry.circular(0),
+                          ),
                           child: ListTile(
                             title: Expanded(
                               flex: 1,

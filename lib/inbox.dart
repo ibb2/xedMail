@@ -10,6 +10,7 @@ import 'package:oauth2_client/google_oauth2_client.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 
 class Inbox extends StatefulWidget {
   const Inbox({super.key, required this.searchQuery});
@@ -310,109 +311,116 @@ class _InboxState extends State<Inbox> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: _emails.length,
-                      itemBuilder: (context, index) {
-                        // if (index.isOdd) {
-                        //   // insert expanded email body after tapped item
-                        //   if (_expandedIndex == emailIndex) {
-                        //     String htmlContent =
-                        //         _decodedHtmlBodies[emailIndex] ??
-                        //         '<p>(Empty)</p>';
-                        //     return SizedBox(
-                        //       height: 400,
-                        //       child: Padding(
-                        //         padding: const EdgeInsets.symmetric(
-                        //           horizontal: 8.0,
-                        //         ),
-                        //         child: InAppWebView(
-                        //           initialData: InAppWebViewInitialData(
-                        //             data: htmlContent,
-                        //             mimeType: 'text/html',
-                        //             encoding: 'utf-8',
-                        //           ),
-                        //           initialSettings: InAppWebViewSettings(
-                        //             useOnDownloadStart: true,
-                        //             useOnLoadResource: true,
-                        //             javaScriptEnabled: true,
-                        //             useShouldOverrideUrlLoading: true,
-                        //             clearCache: true,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     );
-                        //   } else {
-                        //     return const SizedBox.shrink();
-                        //   }
-                        // }
+                    child: DynMouseScroll(
+                      builder: (context, controller, physics) => ListView.builder(
+                        controller: controller,
+                        physics: physics,
+                        itemCount: _emails.length,
+                        itemBuilder: (context, index) {
+                          // if (index.isOdd) {
+                          //   // insert expanded email body after tapped item
+                          //   if (_expandedIndex == emailIndex) {
+                          //     String htmlContent =
+                          //         _decodedHtmlBodies[emailIndex] ??
+                          //         '<p>(Empty)</p>';
+                          //     return SizedBox(
+                          //       height: 400,
+                          //       child: Padding(
+                          //         padding: const EdgeInsets.symmetric(
+                          //           horizontal: 8.0,
+                          //         ),
+                          //         child: InAppWebView(
+                          //           initialData: InAppWebViewInitialData(
+                          //             data: htmlContent,
+                          //             mimeType: 'text/html',
+                          //             encoding: 'utf-8',
+                          //           ),
+                          //           initialSettings: InAppWebViewSettings(
+                          //             useOnDownloadStart: true,
+                          //             useOnLoadResource: true,
+                          //             javaScriptEnabled: true,
+                          //             useShouldOverrideUrlLoading: true,
+                          //             clearCache: true,
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     );
+                          //   } else {
+                          //     return const SizedBox.shrink();
+                          //   }
+                          // }
 
-                        final email = _emails[index];
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(0),
-                          ),
-                          color: Colors.transparent,
-                          elevation: 0,
-                          child: ListTile(
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  email.from?.firstOrNull?.personalName ??
-                                      email.fromEmail ??
-                                      'Unknown Sender',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    email.decodeSubject() ?? 'No Subject',
+                          final email = _emails[index];
+                          return Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(0),
+                            ),
+                            color: Colors.transparent,
+                            elevation: 0,
+                            child: ListTile(
+                              title: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    email.from?.firstOrNull?.personalName ??
+                                        email.fromEmail ??
+                                        'Unknown Sender',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      overflow: TextOverflow.ellipsis,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Flexible(
+                                    child: Text(
+                                      email.decodeSubject() ?? 'No Subject',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // subtitle: Column(
+                              //   crossAxisAlignment: CrossAxisAlignment.start,
+                              //   children: [
+                              //     if (_previewSnippets.containsKey(emailIndex))
+                              //       Padding(
+                              //         padding: const EdgeInsets.only(top: 4.0),
+                              //         child: Text(
+                              //           _previewSnippets[emailIndex]!,
+                              //           style: TextStyle(
+                              //             fontSize: 13,
+                              //             color: Colors.grey[600],
+                              //           ),
+                              //           maxLines: 2,
+                              //           overflow: TextOverflow.ellipsis,
+                              //         ),
+                              //       ),
+                              //   ],
+                              // ),
+                              trailing: Text(
+                                email.decodeDate()?.toLocal().toString().split(
+                                      ' ',
+                                    )[0] ??
+                                    '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              onTap: () {
+                                // Action to view email details
+                                setState(() {
+                                  if (_expandedIndex == index) {
+                                    _expandedIndex = null; // Collapse
+                                  } else {
+                                    _expandedIndex = index; // Expand
+                                  }
+                                });
+                              },
                             ),
-                            // subtitle: Column(
-                            //   crossAxisAlignment: CrossAxisAlignment.start,
-                            //   children: [
-                            //     if (_previewSnippets.containsKey(emailIndex))
-                            //       Padding(
-                            //         padding: const EdgeInsets.only(top: 4.0),
-                            //         child: Text(
-                            //           _previewSnippets[emailIndex]!,
-                            //           style: TextStyle(
-                            //             fontSize: 13,
-                            //             color: Colors.grey[600],
-                            //           ),
-                            //           maxLines: 2,
-                            //           overflow: TextOverflow.ellipsis,
-                            //         ),
-                            //       ),
-                            //   ],
-                            // ),
-                            trailing: Text(
-                              email.decodeDate()?.toLocal().toString().split(
-                                    ' ',
-                                  )[0] ??
-                                  '',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            onTap: () {
-                              // Action to view email details
-                              setState(() {
-                                if (_expandedIndex == index) {
-                                  _expandedIndex = null; // Collapse
-                                } else {
-                                  _expandedIndex = index; // Expand
-                                }
-                              });
-                            },
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                   ElevatedButton(

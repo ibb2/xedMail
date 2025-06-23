@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:xedmail/inbox.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,6 +9,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String? searchQuery;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,10 +30,29 @@ class _HomePageState extends State<HomePage> {
                         EdgeInsets.symmetric(horizontal: 16.0),
                       ),
                       onTap: () {
-                        controller.openView();
+                        print("Opening search view");
+                        // controller.openView();
                       },
-                      onChanged: (_) {
-                        controller.openView();
+                      onChanged: (query) {
+                        print('Search query: $query');
+                        setState(() {
+                          print("Setting search query to: $query");
+                          searchQuery = query;
+                        });
+                        // controller.openView(); // The controller is the suggestions view.
+                      },
+                      onSubmitted: (query) {
+                        print("Searching");
+                        // setState(() {
+                        //   searchQuery = query;
+                        // });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Inbox(searchQuery: query),
+                          ),
+                        );
+                        // Navigate to search results page
                       },
                       leading: const Icon(Icons.search),
                     );

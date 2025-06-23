@@ -352,8 +352,10 @@ class _InboxState extends State<Inbox> {
                           child: ListTile(
                             title: Expanded(
                               flex: 1,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
                                     email.from?.firstOrNull?.personalName ??

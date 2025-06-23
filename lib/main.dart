@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:xedmail/homepage.dart';
-import 'package:xedmail/inbox.dart';
-import 'package:xedmail/new-auth.dart';
+import 'package:xedmail/screen/homepage.dart';
+import 'package:xedmail/screen/inbox.dart';
+import 'package:xedmail/screen/new-auth.dart';
 
 void main() {
   runApp(const MyApp());

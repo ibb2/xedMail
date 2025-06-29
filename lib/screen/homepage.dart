@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xedmail/inbox.dart';
+import 'package:xedmail/screen/inbox.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

@@ -12,6 +12,8 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 
+import 'email.dart';
+
 class Inbox extends StatefulWidget {
   const Inbox({super.key, required this.searchQuery});
 
@@ -292,6 +294,14 @@ class _InboxState extends State<Inbox> {
     });
   }
 
+  void _viewEmail(int index, MimeMessage mimeMessage) => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) =>
+          Email(email: mimeMessage, htmlBody: _decodedHtmlBodies[index]),
+    ),
+  );
+
   @override
   void dispose() {
     _mailSubscription?.cancel();
@@ -410,11 +420,7 @@ class _InboxState extends State<Inbox> {
                               onTap: () {
                                 // Action to view email details
                                 setState(() {
-                                  if (_expandedIndex == index) {
-                                    _expandedIndex = null; // Collapse
-                                  } else {
-                                    _expandedIndex = index; // Expand
-                                  }
+                                  _viewEmail(index, email);
                                 });
                               },
                             ),
